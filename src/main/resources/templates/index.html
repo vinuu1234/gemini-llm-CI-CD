@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Gemini Style Prompt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+	font-family: 'Segoe UI', sans-serif;
+	background-color: black;
+	margin: 0;
+	padding: 20px;
+}
+
+.container {
+	max-width: 900px;
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 25px;
+}
+
+.chat-box {
+	background: #ffffff;
+	border: 1px solid #e0e0e0;
+	border-radius: 16px;
+	padding: 20px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+	text-align: center;
+	color:crimson;
+}
+
+form {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+input[type="text"] {
+	flex: 1;
+	padding: 14px 18px;
+	font-size: 16px;
+	border: 1px solid red;
+	border-radius: 999px;
+	background-color: #f9f9f9;
+	outline: none;
+	transition: border 0.3s ease;
+}
+
+input[type="text"]:focus {
+	border-color: #4a90e2;
+}
+
+.upload-label {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #f0f0f0;
+	border-radius: 50%;
+	width: 42px;
+	height: 42px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+}
+
+.upload-label:hover {
+	background-color: #e0e0e0;
+}
+
+.upload-label input[type="file"] {
+	display: none;
+}
+
+.send-button {
+	background-color: #4a90e2;
+	color: white;
+	border: none;
+	border-radius: 999px;
+	padding: 12px 22px;
+	font-size: 16px;
+	cursor: pointer;
+	transition: background 0.3s ease;
+}
+
+.send-button:hover {
+	background-color: #357abd;
+}
+
+.response-box {
+	background: lightcyan;
+	padding: 20px;
+	border-radius: 10px;
+	white-space: pre-wrap;
+	font-family: 'Segoe UI', sans-serif;
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+@media ( max-width : 600px) {
+	form {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.upload-label, .send-button {
+		width: 100%;
+	}
+}
+</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Gemini Assistant</h1>
+
+		<div class="chat-box">
+			<form action="/submit" method="post" enctype="multipart/form-data">
+				<input type="text" name="prompt"
+					placeholder="Ask something or describe the file..." /> <label
+					class="upload-label" for="fileInput" title="Upload file"> 
+					<svg
+						xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+						fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"
+						stroke-linejoin="round" class="feather feather-upload">
+    					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+   						 <polyline points="17 8 12 3 7 8" />
+   						 <line x1="12" y1="3" x2="12" y2="15" />
+ 					 </svg> <input type="file" name="file" id="fileInput" />
+				</label> <span id="file-name" style="font-size: 14px; color: #555;"></span>
+				<span id="file-name" style="font-size: 14px; color: #555;"></span>
+
+
+
+				<button type="submit" class="send-button">Send</button>
+			</form>
+		</div>
+
+		<div th:if="${response}" class="response-box">
+			<h3>Response:</h3>
+			<div th:utext="${response}"></div>
+		</div>
+	</div>
+	
+	<div id="loader" style="display: none; text-align: center; margin-top: 20px;">
+    <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading..." style="width: 60px;" />
+    <p>Processing your request...</p>
+</div>
+
+	
+</body>
+
+<script>
+document.querySelector("form").addEventListener("submit", function (e) {
+    const prompt = document.querySelector('input[name="prompt"]').value.trim();
+    const file = document.querySelector('input[name="file"]').files.length;
+
+    if (!prompt && file === 0) {
+        alert("Please enter a prompt or upload a file.");
+        e.preventDefault();
+        return;
+    }
+
+    // Show loader, hide form and previous response
+    document.getElementById('loader').style.display = 'block';
+    document.querySelector(".chat-box").style.display = "none";
+    const responseBox = document.querySelector(".response-box");
+    if (responseBox) {
+        responseBox.style.display = "none";
+    }
+});
+
+// Show selected file name
+document.getElementById('fileInput').addEventListener('change', function () {
+    const fileNameSpan = document.getElementById('file-name');
+    const file = this.files[0];
+
+    if (file) {
+        fileNameSpan.textContent = file.name;
+    } else {
+        fileNameSpan.textContent = '';
+    }
+});
+</script>
+</html>
