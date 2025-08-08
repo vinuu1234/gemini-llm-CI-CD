@@ -1,0 +1,52 @@
+name: Build and Deploy Spring Boot App to EC2 via Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'   # ✅ REQUIRED: Specify JDK distribution
+        java-version: '17'
+
+
+    - name: Build JAR
+      run: mvn clean package -DskipTests
+
+    - name: Build Docker image
+      run: docker build -t demo-app .
+
+    - name: Save Docker image
+      run: docker save demo-app | gzip > demo-app.tar.gz
+
+    - name: Copy Docker image to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_KEY }}
+        source: demo-app.tar.gz
+        target: ~/app/
+
+    - name: SSH and run container
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_KEY }}
+        script: |
+          docker load < ~/app/demo-app.tar.gz
+          docker stop demo-app || true
+          docker rm demo-app || true
+          docker run -d -p 8080:8080 --name demo-app demo-app
